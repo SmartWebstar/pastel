@@ -9,10 +9,12 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
+#include <boost/bind/bind.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <fstream>
 
 using ::testing::StrictMock;
+using namespace boost::placeholders;
 
 static const std::string CLIENT_VERSION_STR = FormatVersion(CLIENT_VERSION);
 extern std::atomic<bool> fRequestShutdown;

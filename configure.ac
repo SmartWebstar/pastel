@@ -7,7 +7,7 @@ define(_CLIENT_VERSION_BUILD, 27)
 define(_ZC_BUILD_VAL, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, m4_incr(_CLIENT_VERSION_BUILD), m4_eval(_CLIENT_VERSION_BUILD < 50), 1, m4_eval(_CLIENT_VERSION_BUILD - 24), m4_eval(_CLIENT_VERSION_BUILD == 50), 1, , m4_eval(_CLIENT_VERSION_BUILD - 50)))
 define(_CLIENT_VERSION_SUFFIX, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, _CLIENT_VERSION_REVISION-beta$1, m4_eval(_CLIENT_VERSION_BUILD < 50), 1, _CLIENT_VERSION_REVISION-rc$1, m4_eval(_CLIENT_VERSION_BUILD == 50), 1, _CLIENT_VERSION_REVISION, _CLIENT_VERSION_REVISION-$1))
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2018)
+define(_COPYRIGHT_YEAR, 2022)
 AC_INIT([Pastel],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_SUFFIX(_ZC_BUILD_VAL)],[https://github.com/PastelNetwork/Pastel/issues],[pastel])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([src/config/bitcoin-config.h])
@@ -25,6 +25,7 @@ if test "x${ARFLAGS+set}" != "xset"; then
 fi
 
 AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 
 AH_TOP([#ifndef BITCOIN_CONFIG_H])
 AH_TOP([#define BITCOIN_CONFIG_H])
@@ -578,7 +579,7 @@ AC_SUBST(LIBMEMENV)
 
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
-    BITCOIN_FIND_BDB62
+    PASTEL_FIND_BDB62
 fi
 
 dnl Check Qpid Proton headers and library exist
@@ -606,14 +607,14 @@ fi
 
 if test x$use_boost = xyes; then
 
-dnl Check for boost libs
-dnl We need Boost >= 1.62 to fix a potential security bug (https://github.com/zcash/zcash/issues/1241)
-AX_BOOST_BASE([1.62])
-AX_BOOST_SYSTEM
-AX_BOOST_FILESYSTEM
-AX_BOOST_PROGRAM_OPTIONS
-AX_BOOST_THREAD
-AX_BOOST_CHRONO
+dnl Check for boost libs >= 1.76
+
+BOOST_REQUIRE([1.76])
+BOOST_SYSTEM
+BOOST_FILESYSTEM
+BOOST_PROGRAM_OPTIONS
+BOOST_THREAD
+BOOST_CHRONO
 
 fi
 
@@ -631,12 +632,13 @@ if test x$use_tests = xyes; then
 
   if test x$use_boost = xyes; then
 
-  AX_BOOST_UNIT_TEST_FRAMEWORK
+  BOOST_TEST
+  AC_MSG_NOTICE([Using boost test: [$BOOST_UNIT_TEST_FRAMEWORK_LIBS]])
 
   dnl Determine if -DBOOST_TEST_DYN_LINK is needed
   AC_MSG_CHECKING([for dynamic linked boost test])
   TEMP_LIBS="$LIBS"
-  LIBS="$LIBS $BOOST_LDFLAGS $BOOST_UNIT_TEST_FRAMEWORK_LIB"
+  LIBS="$LIBS $BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS $BOOST_UNIT_TEST_FRAMEWORK_LIBS"
   TEMP_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
   AC_LINK_IFELSE([AC_LANG_SOURCE([
@@ -654,8 +656,10 @@ if test x$use_tests = xyes; then
   fi
 fi
 
+
 if test x$use_boost = xyes; then
-BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_PROGRAM_OPTIONS_LIB $BOOST_THREAD_LIB $BOOST_CHRONO_LIB"
+BOOST_LIBS="$BOOST_THREAD_LDFLAGS $BOOST_SYSTEM_LIBS $BOOST_FILESYSTEM_LIBS $BOOST_PROGRAM_OPTIONS_LIBS $BOOST_THREAD_LIBS $BOOST_CHRONO_LIBS"
+AC_MSG_NOTICE([Using boost linker options: [$BOOST_LIBS]])
 fi
 
 if test x$use_pkgconfig = xyes; then
@@ -765,7 +769,7 @@ AX_CHECK_COMPILE_FLAG([-fwrapv],[CXXFLAGS="$CXXFLAGS -fwrapv"])
 AX_CHECK_COMPILE_FLAG([-fno-strict-aliasing],[CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"])
 AX_CHECK_COMPILE_FLAG([-Wno-builtin-declaration-mismatch],[CXXFLAGS="$CXXFLAGS -Wno-builtin-declaration-mismatch"],,[[$CXXFLAG_WERROR]])
 
-LIBZCASH_LIBS="-lgmp -lgmpxx $BOOST_SYSTEM_LIB -lcrypto -lsodium $RUST_LIBS"
+LIBZCASH_LIBS="-lgmp -lgmpxx $BOOST_SYSTEM_LIBS -lcrypto -lsodium $RUST_LIBS"
 
 AC_MSG_CHECKING([whether to build bitcoind])
 AM_CONDITIONAL([BUILD_BITCOIND], [test x$build_bitcoind = xyes])

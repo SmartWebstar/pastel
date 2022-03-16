@@ -52,7 +52,11 @@ namespace port {
 // Mac OS
 #elif defined(OS_MACOSX)
 inline void MemoryBarrier() {
-  OSMemoryBarrier();
+#ifdef LEVELDB_ATOMIC_PRESENT
+	std::atomic_thread_fence(std::memory_order_seq_cst);
+#else  
+	OSMemoryBarrier();
+#endif // LEVELDB_ATOMIC_PRESENT
 }
 #define LEVELDB_HAVE_MEMORY_BARRIER
 
@@ -109,7 +113,7 @@ class AtomicPointer {
  private:
   void* rep_;
  public:
-  AtomicPointer() { }
+  AtomicPointer() : rep_(nullptr) { }
   explicit AtomicPointer(void* p) : rep_(p) {}
   inline void* NoBarrier_Load() const { return rep_; }
   inline void NoBarrier_Store(void* v) { rep_ = v; }

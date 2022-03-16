@@ -1,17 +1,27 @@
-OSX_MIN_VERSION=10.8
-OSX_SDK_VERSION=10.11
-OSX_SDK=$(SDK_PATH)/MacOSX$(OSX_SDK_VERSION).sdk
-LD64_VERSION=253.9
-darwin_CC=clang -target $(host) -mmacosx-version-min=$(OSX_MIN_VERSION) --sysroot $(OSX_SDK) -mlinker-version=$(LD64_VERSION)
-darwin_CXX=clang++ -target $(host) -mmacosx-version-min=$(OSX_MIN_VERSION) --sysroot $(OSX_SDK) -mlinker-version=$(LD64_VERSION) -stdlib=libc++
+OSX_MIN_VERSION=10.14
+OSX_SDK_VERSION=10.14
+OSX_SDK=$($(host_arch)_$(host_os)_prefix)/SDKs/MacOSX$(OSX_SDK_VERSION).sdk
+LD64_VERSION=530
 
-darwin_CFLAGS=-pipe
-darwin_CXXFLAGS=$(darwin_CFLAGS)
+darwin_host_CC = clang
+darwin_host_CXX = clang++
 
-darwin_release_CFLAGS=-O1
+ifneq ($(build_os),$(host_os))
+darwin_toolchain_path=$($(host_arch)_$(host_os)_prefix)/native/bin/
+else
+darwin_toolchain_path=
+endif
+
+darwin_CFLAGS=-pipe -target $(host) -mmacosx-version-min=$(OSX_MIN_VERSION) --sysroot $(OSX_SDK) -mlinker-version=$(LD64_VERSION) -B$(build_prefix)/bin 
+darwin_CXXFLAGS=$(darwin_CFLAGS) -stdlib=libc++ -isystem $(OSX_SDK)/usr/include/c++/v1
+
+darwin_release_CFLAGS=-O3
 darwin_release_CXXFLAGS=$(darwin_release_CFLAGS)
 
-darwin_debug_CFLAGS=-O1
+darwin_debug_CFLAGS=-O0
 darwin_debug_CXXFLAGS=$(darwin_debug_CFLAGS)
 
-darwin_native_toolchain=native_cctools
+darwin_native_binutils=native_cctools macosx_sdk
+darwin_native_toolchain=native_cctools macosx_sdk
+
+darwin_cmake_system=Darwin
